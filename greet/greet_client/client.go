@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -17,4 +18,15 @@ func main() {
 	defer conn.Close()
 	c := greetpb.NewGreetServiceClient(conn)
 	fmt.Println(c)
+	req := &greetpb.GreetRequest{
+		Greeting: &greetpb.Greeting{
+			FirstName: "Nick",
+			LastName:  "Dont care",
+		},
+	}
+	res, e := c.Greet(context.Background(), req)
+	if e != nil {
+		fmt.Println(e)
+	} 
+	fmt.Println(res.Result)
 }
