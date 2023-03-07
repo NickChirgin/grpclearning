@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package calculator;
+option go_package = "/calculatorpb";
+
+message PrimeRequest {
+  int32 number = 1;
+}
+
+message PrimeResponse {
+  reserved 1;
+  reserved "result";
+  int32 prime = 2;
+}
+
+service PrimeService {
+  rpc Prime(PrimeRequest) returns (stream PrimeResponse);
+}

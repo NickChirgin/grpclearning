@@ -6,7 +6,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/nickchirgin/grpclearning/greet/greetpb/greetpb"
+	"github.com/nickchirgin/grpclearning/calculator/calculatorpb"
 	"google.golang.org/grpc"
 )
 
@@ -17,19 +17,16 @@ func main() {
 		log.Fatalf("Can't connect %v", err)
 	}
 	defer conn.Close()
-	c := greetpb.NewGreetServiceClient(conn)
+	c := calculatorpb.NewPrimeServiceClient(conn)
 	doServerStreaming(c)
 }
 
-func doServerStreaming(c greetpb.GreetServiceClient) {
+func doServerStreaming(c calculatorpb.PrimeServiceClient) {
 	fmt.Println("streaming \n")
-	req := &greetpb.GreetManyTimesRequest{
-		Greeting: &greetpb.Greeting{
-			FirstName: "Nick",
-			LastName: "C",
-		},
+	req := &calculatorpb.PrimeRequest{
+		Number: 120,
 	}
-	res, err := c.GreetManyTimes(context.Background(), req)	
+	res, err := c.Prime(context.Background(), req)	
 	if err != nil {
 		log.Fatalf("Error while calling stream rpc %v", err)
 	}
@@ -41,6 +38,6 @@ func doServerStreaming(c greetpb.GreetServiceClient) {
 		if e != nil {
 			log.Fatalf("error while reading stream %v", e)
 		}
-		fmt.Println(msg.Result)
+		fmt.Println(msg.Prime)
 	}	
 }
