@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	PrimeService_Prime_FullMethodName = "/calculator.PrimeService/Prime"
+	PrimeService_Prime_FullMethodName          = "/calculator.PrimeService/Prime"
+	PrimeService_ComputeAverage_FullMethodName = "/calculator.PrimeService/ComputeAverage"
 )
 
 // PrimeServiceClient is the client API for PrimeService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PrimeServiceClient interface {
 	Prime(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (PrimeService_PrimeClient, error)
+	ComputeAverage(ctx context.Context, opts ...grpc.CallOption) (PrimeService_ComputeAverageClient, error)
 }
 
 type primeServiceClient struct {
@@ -69,11 +71,46 @@ func (x *primeServicePrimeClient) Recv() (*PrimeResponse, error) {
 	return m, nil
 }
 
+func (c *primeServiceClient) ComputeAverage(ctx context.Context, opts ...grpc.CallOption) (PrimeService_ComputeAverageClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PrimeService_ServiceDesc.Streams[1], PrimeService_ComputeAverage_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &primeServiceComputeAverageClient{stream}
+	return x, nil
+}
+
+type PrimeService_ComputeAverageClient interface {
+	Send(*ComputeAverageRequest) error
+	CloseAndRecv() (*ComputeAverageResponse, error)
+	grpc.ClientStream
+}
+
+type primeServiceComputeAverageClient struct {
+	grpc.ClientStream
+}
+
+func (x *primeServiceComputeAverageClient) Send(m *ComputeAverageRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *primeServiceComputeAverageClient) CloseAndRecv() (*ComputeAverageResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(ComputeAverageResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PrimeServiceServer is the server API for PrimeService service.
 // All implementations must embed UnimplementedPrimeServiceServer
 // for forward compatibility
 type PrimeServiceServer interface {
 	Prime(*PrimeRequest, PrimeService_PrimeServer) error
+	ComputeAverage(PrimeService_ComputeAverageServer) error
 	mustEmbedUnimplementedPrimeServiceServer()
 }
 
@@ -83,6 +120,9 @@ type UnimplementedPrimeServiceServer struct {
 
 func (UnimplementedPrimeServiceServer) Prime(*PrimeRequest, PrimeService_PrimeServer) error {
 	return status.Errorf(codes.Unimplemented, "method Prime not implemented")
+}
+func (UnimplementedPrimeServiceServer) ComputeAverage(PrimeService_ComputeAverageServer) error {
+	return status.Errorf(codes.Unimplemented, "method ComputeAverage not implemented")
 }
 func (UnimplementedPrimeServiceServer) mustEmbedUnimplementedPrimeServiceServer() {}
 
@@ -118,6 +158,32 @@ func (x *primeServicePrimeServer) Send(m *PrimeResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _PrimeService_ComputeAverage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PrimeServiceServer).ComputeAverage(&primeServiceComputeAverageServer{stream})
+}
+
+type PrimeService_ComputeAverageServer interface {
+	SendAndClose(*ComputeAverageResponse) error
+	Recv() (*ComputeAverageRequest, error)
+	grpc.ServerStream
+}
+
+type primeServiceComputeAverageServer struct {
+	grpc.ServerStream
+}
+
+func (x *primeServiceComputeAverageServer) SendAndClose(m *ComputeAverageResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *primeServiceComputeAverageServer) Recv() (*ComputeAverageRequest, error) {
+	m := new(ComputeAverageRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PrimeService_ServiceDesc is the grpc.ServiceDesc for PrimeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +196,11 @@ var PrimeService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "Prime",
 			Handler:       _PrimeService_Prime_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "ComputeAverage",
+			Handler:       _PrimeService_ComputeAverage_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "calculator/calculatorpb/calculator.proto",

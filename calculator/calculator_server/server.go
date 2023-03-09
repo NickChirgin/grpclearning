@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -28,6 +29,23 @@ func (s *server) Prime(req *calculatorpb.PrimeRequest, stream calculatorpb.Prime
 		}
 	}
 	return nil
+}
+func (*server) ComputeAverage(stream calculatorpb.PrimeService_ComputeAverageServer) error {
+	fmt.Println("Compute average server")
+	result, count := 0, 0
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Average: int32(result/count),
+			})
+		}
+		if err != nil {
+			log.Fatalf("Error while reading stream %v", err)
+		}
+		result += int(req.GetNumber())
+		count++
+	}
 }
 func main() {
 	fmt.Println("Hello")

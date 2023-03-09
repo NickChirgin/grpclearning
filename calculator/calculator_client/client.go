@@ -18,7 +18,30 @@ func main() {
 	}
 	defer conn.Close()
 	c := calculatorpb.NewPrimeServiceClient(conn)
-	doServerStreaming(c)
+	doClientStreaming(c)
+}
+func doClientStreaming(c calculatorpb.PrimeServiceClient) {
+	fmt.Println("Client streaming")
+	requests := []*calculatorpb.ComputeAverageRequest{
+		&calculatorpb.ComputeAverageRequest{Number: 1},
+		&calculatorpb.ComputeAverageRequest{Number: 5},
+		&calculatorpb.ComputeAverageRequest{Number: 3},
+		&calculatorpb.ComputeAverageRequest{Number: 18},
+		&calculatorpb.ComputeAverageRequest{Number: 3},
+	}
+	stream, err := c.ComputeAverage(context.Background())
+	if err != nil {
+		log.Fatalf("Error while streaming %v", err)
+	}
+	for _, req := range requests {
+		fmt.Printf("Stream sending %v", req)
+		stream.Send(req)
+	}
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error %v", err)
+	}
+	fmt.Println("Average is %d", res)
 }
 
 func doServerStreaming(c calculatorpb.PrimeServiceClient) {

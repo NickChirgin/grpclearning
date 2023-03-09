@@ -13,6 +13,13 @@ message PrimeResponse {
   int32 prime = 2;
 }
 
+message ComputeAverageRequest {
+  int32 number = 1;
+}
+message ComputeAverageResponse {
+  int32 average = 1; 
+}
 service PrimeService {
   rpc Prime(PrimeRequest) returns (stream PrimeResponse);
+  rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse);
 }
