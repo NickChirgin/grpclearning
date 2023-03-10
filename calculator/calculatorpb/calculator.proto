@@ -19,7 +19,14 @@ message ComputeAverageRequest {
 message ComputeAverageResponse {
   int32 average = 1; 
 }
+message MaxIntegerRequest {
+  int64 number = 1;
+}
+message MaxIntegerResponse {
+  int64 max = 1;
+}
 service PrimeService {
   rpc Prime(PrimeRequest) returns (stream PrimeResponse);
   rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse);
+  rpc MaxInteger(stream MaxIntegerRequest) returns (stream MaxIntegerResponse) {};
 }

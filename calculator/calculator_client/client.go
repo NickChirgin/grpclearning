@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/nickchirgin/grpclearning/calculator/calculatorpb"
 	"google.golang.org/grpc"
@@ -18,30 +19,45 @@ func main() {
 	}
 	defer conn.Close()
 	c := calculatorpb.NewPrimeServiceClient(conn)
-	doClientStreaming(c)
+	bidiStreaming(c)
 }
-func doClientStreaming(c calculatorpb.PrimeServiceClient) {
+func bidiStreaming(c calculatorpb.PrimeServiceClient) {
 	fmt.Println("Client streaming")
-	requests := []*calculatorpb.ComputeAverageRequest{
-		&calculatorpb.ComputeAverageRequest{Number: 1},
-		&calculatorpb.ComputeAverageRequest{Number: 5},
-		&calculatorpb.ComputeAverageRequest{Number: 3},
-		&calculatorpb.ComputeAverageRequest{Number: 18},
-		&calculatorpb.ComputeAverageRequest{Number: 3},
-	}
-	stream, err := c.ComputeAverage(context.Background())
+	waitCh := make(chan struct{})
+	stream, err := c.MaxInteger(context.Background())	
 	if err != nil {
-		log.Fatalf("Error while streaming %v", err)
+		log.Fatalf("Error while reading stream %v", err)
 	}
-	for _, req := range requests {
-		fmt.Printf("Stream sending %v", req)
-		stream.Send(req)
+	requests := []*calculatorpb.MaxIntegerRequest{
+		&calculatorpb.MaxIntegerRequest{Number: 1},
+		&calculatorpb.MaxIntegerRequest{Number: 5},
+		&calculatorpb.MaxIntegerRequest{Number: 3},
+		&calculatorpb.MaxIntegerRequest{Number: 18},
+		&calculatorpb.MaxIntegerRequest{Number: 3},
 	}
-	res, err := stream.CloseAndRecv()
-	if err != nil {
-		log.Fatalf("Error %v", err)
-	}
-	fmt.Println("Average is %d", res)
+	go func() {
+		for _, req := range requests {
+			fmt.Printf("Stream sending %v", req)
+			stream.Send(req)
+			time.Sleep(time.Second)
+		}
+		stream.CloseSend()
+	}()
+	go func() {
+		for {
+			res, err := stream.Recv()	
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while reading stream %v", err)
+				break
+			}
+			fmt.Printf("Max integer is %d\n", res.GetMax())
+		}
+		close(waitCh)
+	}()
+	<-waitCh
 }
 
 func doServerStreaming(c calculatorpb.PrimeServiceClient) {

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	PrimeService_Prime_FullMethodName          = "/calculator.PrimeService/Prime"
 	PrimeService_ComputeAverage_FullMethodName = "/calculator.PrimeService/ComputeAverage"
+	PrimeService_MaxInteger_FullMethodName     = "/calculator.PrimeService/MaxInteger"
 )
 
 // PrimeServiceClient is the client API for PrimeService service.
@@ -29,6 +30,7 @@ const (
 type PrimeServiceClient interface {
 	Prime(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (PrimeService_PrimeClient, error)
 	ComputeAverage(ctx context.Context, opts ...grpc.CallOption) (PrimeService_ComputeAverageClient, error)
+	MaxInteger(ctx context.Context, opts ...grpc.CallOption) (PrimeService_MaxIntegerClient, error)
 }
 
 type primeServiceClient struct {
@@ -105,12 +107,44 @@ func (x *primeServiceComputeAverageClient) CloseAndRecv() (*ComputeAverageRespon
 	return m, nil
 }
 
+func (c *primeServiceClient) MaxInteger(ctx context.Context, opts ...grpc.CallOption) (PrimeService_MaxIntegerClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PrimeService_ServiceDesc.Streams[2], PrimeService_MaxInteger_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &primeServiceMaxIntegerClient{stream}
+	return x, nil
+}
+
+type PrimeService_MaxIntegerClient interface {
+	Send(*MaxIntegerRequest) error
+	Recv() (*MaxIntegerResponse, error)
+	grpc.ClientStream
+}
+
+type primeServiceMaxIntegerClient struct {
+	grpc.ClientStream
+}
+
+func (x *primeServiceMaxIntegerClient) Send(m *MaxIntegerRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *primeServiceMaxIntegerClient) Recv() (*MaxIntegerResponse, error) {
+	m := new(MaxIntegerResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PrimeServiceServer is the server API for PrimeService service.
 // All implementations must embed UnimplementedPrimeServiceServer
 // for forward compatibility
 type PrimeServiceServer interface {
 	Prime(*PrimeRequest, PrimeService_PrimeServer) error
 	ComputeAverage(PrimeService_ComputeAverageServer) error
+	MaxInteger(PrimeService_MaxIntegerServer) error
 	mustEmbedUnimplementedPrimeServiceServer()
 }
 
@@ -123,6 +157,9 @@ func (UnimplementedPrimeServiceServer) Prime(*PrimeRequest, PrimeService_PrimeSe
 }
 func (UnimplementedPrimeServiceServer) ComputeAverage(PrimeService_ComputeAverageServer) error {
 	return status.Errorf(codes.Unimplemented, "method ComputeAverage not implemented")
+}
+func (UnimplementedPrimeServiceServer) MaxInteger(PrimeService_MaxIntegerServer) error {
+	return status.Errorf(codes.Unimplemented, "method MaxInteger not implemented")
 }
 func (UnimplementedPrimeServiceServer) mustEmbedUnimplementedPrimeServiceServer() {}
 
@@ -184,6 +221,32 @@ func (x *primeServiceComputeAverageServer) Recv() (*ComputeAverageRequest, error
 	return m, nil
 }
 
+func _PrimeService_MaxInteger_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PrimeServiceServer).MaxInteger(&primeServiceMaxIntegerServer{stream})
+}
+
+type PrimeService_MaxIntegerServer interface {
+	Send(*MaxIntegerResponse) error
+	Recv() (*MaxIntegerRequest, error)
+	grpc.ServerStream
+}
+
+type primeServiceMaxIntegerServer struct {
+	grpc.ServerStream
+}
+
+func (x *primeServiceMaxIntegerServer) Send(m *MaxIntegerResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *primeServiceMaxIntegerServer) Recv() (*MaxIntegerRequest, error) {
+	m := new(MaxIntegerRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PrimeService_ServiceDesc is the grpc.ServiceDesc for PrimeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,6 +263,12 @@ var PrimeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ComputeAverage",
 			Handler:       _PrimeService_ComputeAverage_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "MaxInteger",
+			Handler:       _PrimeService_MaxInteger_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},
